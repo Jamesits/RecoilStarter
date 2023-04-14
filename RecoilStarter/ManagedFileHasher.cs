@@ -11,6 +11,8 @@ namespace RecoilStarter
     public class ManagedFileHasher : IDisposable
     {
         private const int blockSizeBytes = 4 * 1024 * 1024;
+        private const int filePreloadCount = 64;
+        private const int ioQueueDepth = 2;
 
         private readonly string path;
 
@@ -24,8 +26,8 @@ namespace RecoilStarter
 
             public FileStream FileStream;
         };
-        private readonly BlockingCollection<FileHashTrackingObj> openedFiles = new BlockingCollection<FileHashTrackingObj>(8);
-        private readonly BlockingCollection<Task<FileHashTrackingObj>> hashedFiles = new BlockingCollection<Task<FileHashTrackingObj>>(8);
+        private readonly BlockingCollection<FileHashTrackingObj> openedFiles = new BlockingCollection<FileHashTrackingObj>(filePreloadCount);
+        private readonly BlockingCollection<Task<FileHashTrackingObj>> hashedFiles = new BlockingCollection<Task<FileHashTrackingObj>>(ioQueueDepth);
 
         public ManagedFileHasher(string path)
         {
