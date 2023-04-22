@@ -32,7 +32,9 @@ namespace RecoilStarter
         private readonly int perFileBufferSizeBytes = 81920; 
         private readonly int ioQueueDepth; // calculated
 
-        // pipeFatness: disk sequential throughput * RTT
+        // pipeFatness: disk sequential throughput * RTT (Bytes)
+        //   measure disk sequential throughput with diskspd read Q8T1
+        //   measure disk RTT with ioping
         // randomAccessPreference: if file size exceeds N*randomAccessPreference*1MiB, the degree of parallelism will be lowered by 2^N
         public ManagedFileHasher(string path, double pipeFatness, double randomAccessPreference)
         {

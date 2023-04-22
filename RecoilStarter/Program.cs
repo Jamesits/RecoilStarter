@@ -12,7 +12,7 @@ namespace RecoilStarter
 
             // NVMe (PCIe 4.0 x4) SSD
             var gameDir = "C:\\temp_storage_test\\Genshin Impact Game";
-            var pipeFatness = 4194304; // 8000MiB/s * 500μs
+            var pipeFatness = 3670016; // 7000MiB/s * 500μs
             var randomAccessPreference = 256;
 
             // NVMe (PCIe 3.0 x4) SSD
@@ -34,7 +34,7 @@ namespace RecoilStarter
             if (backgroundProcessing)
             {
                 // set CPU and IO priority to low so that we don't disturb other programs during hashing
-                using (Process p = Process.GetCurrentProcess()) p.PriorityClass = ProcessPriorityClass.BelowNormal;
+                //using (Process p = Process.GetCurrentProcess()) p.PriorityClass = ProcessPriorityClass.BelowNormal;
                 var ioPrio = (int)IOPriority.Low;
                 Win32.NtSetInformationProcess(-1, PROCESS_INFORMATION_CLASS.ProcessIoPriority, ref ioPrio, 4);
             }
@@ -49,7 +49,7 @@ namespace RecoilStarter
             if (backgroundProcessing)
             {
                 // reset CPU and IO priority
-                using (Process p = Process.GetCurrentProcess()) p.PriorityClass = ProcessPriorityClass.Normal;
+                //using (Process p = Process.GetCurrentProcess()) p.PriorityClass = ProcessPriorityClass.Normal;
                 var ioPrio = (int)IOPriority.Normal;
                 Win32.NtSetInformationProcess(-1, PROCESS_INFORMATION_CLASS.ProcessIoPriority, ref ioPrio, 4);
             }
