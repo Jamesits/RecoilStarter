@@ -34,7 +34,7 @@ namespace RecoilStarter
             if (backgroundProcessing)
             {
                 // set CPU and IO priority to low so that we don't disturb other programs during hashing
-                //using (Process p = Process.GetCurrentProcess()) p.PriorityClass = ProcessPriorityClass.BelowNormal;
+                using (Process p = Process.GetCurrentProcess()) p.PriorityClass = ProcessPriorityClass.BelowNormal;
                 var ioPrio = (int)IOPriority.Low;
                 Win32.NtSetInformationProcess(-1, PROCESS_INFORMATION_CLASS.ProcessIoPriority, ref ioPrio, 4);
             }
