@@ -8,11 +8,15 @@ namespace RecoilStarter
 {
     public class ManagedFileHasher : IDisposable
     {
-        private readonly string path;
+        private readonly string basePath;
 
         // synchronization
         private readonly Semaphore ioSem;
         private int wg = 0;
+
+        // stat
+        public long FileCount = 0;
+        public long FileSize = 0;
 
         // weight factors
         private readonly double fileSizeStepBreakPoint;
@@ -29,10 +33,10 @@ namespace RecoilStarter
         private readonly int ioQueueDepth; // calculated
 
         // pipeFatness: disk sequential throughput * RTT
-        // randomAccessPreference: (TODO)
+        // randomAccessPreference: if file size exceeds N*randomAccessPreference*1MiB, the degree of parallelism will be lowered by 2^N
         public ManagedFileHasher(string path, double pipeFatness, double randomAccessPreference)
         {
-            this.path = path;
+            this.basePath = path;
 
             fileSizeStepBreakPoint = randomAccessPreference * 1048576;
             ioQueueDepth = (int)Math.Ceiling(pipeAmplificationFactor * pipeFatness / perFileBufferSizeBytes);
@@ -40,10 +44,9 @@ namespace RecoilStarter
         }
 
         // calculate random access penality on large files
-        private int GetWeight(string path)
+        private int GetWeight(long length)
         {
-            var fi = new FileInfo(path);
-            int weight = (int)(Math.Ceiling(fi.Length / fileSizeStepBreakPoint));
+            int weight = (int)Math.Ceiling(length / fileSizeStepBreakPoint);
             if (weight > ioQueueDepth) weight = ioQueueDepth;
             if (weight < 1) weight = 1;
             return weight;
@@ -62,25 +65,30 @@ namespace RecoilStarter
         }
 
         public void Run() {
-            foreach (var file in EnumerateFiles(path))
+            foreach (var path in EnumerateFiles(basePath))
             {
-                var weight = GetWeight(file);
+                var fi = new FileInfo(path);
+                FileCount++;
+                FileSize += fi.Length;
+
+                var weight = GetWeight(fi.Length);
                 for (var i = 0; i < weight; i++) ioSem.WaitOne();
                 Interlocked.Increment(ref wg);
                 ThreadPool.QueueUserWorkItem(HashProc, new HashRequest{ 
-                    path = file,
+                    path = path,
                     weight = weight,
                     // DO NOT enable async here: https://adamsitnik.com/files/Fast_File_IO_with_DOTNET_6.pdf
-                    stream = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read, perFileBufferSizeBytes, FileOptions.SequentialScan),
+                    stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, perFileBufferSizeBytes, FileOptions.SequentialScan),
                 });
             }
 
+            Console.Error.WriteLine("[*] All requests have been fired, collecting results...");
             while (wg != 0)
             {
-                //Console.WriteLine(string.Format("[i] In flight requests: {0}", wg));
+                //Console.WriteLine(string.Format("[i] Waiting for I/O to finish, in flight requests: {0}", wg));
                 Thread.Sleep(0); // Thread.Yield is not available yet
             }
-            Console.WriteLine("[i] Hash finished.");
+            Console.Error.WriteLine("[+] Hash finished.");
         }
 
         private static IEnumerable<string> EnumerateFiles(string path)
@@ -134,7 +142,7 @@ namespace RecoilStarter
 
             ioSem.Release(req.Value.weight);
             req.Value.stream.Dispose();
-            Console.WriteLine(string.Format("{0} {1} {2}", req.Value.weight, req.Value.path, MD5Hasher.Hash.AsHexString()));
+            Console.WriteLine(string.Format("{0} {1}", req.Value.path, MD5Hasher.Hash.AsHexString()));
             MD5Hasher.Clear(); // dispose the hash result
 
             Interlocked.Decrement(ref wg);
