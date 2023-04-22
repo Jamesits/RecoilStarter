@@ -38,7 +38,7 @@ namespace RecoilStarter
         // randomAccessPreference: if file size exceeds N*randomAccessPreference*1MiB, the degree of parallelism will be lowered by 2^N
         public ManagedFileHasher(string path, double pipeFatness, double randomAccessPreference)
         {
-            this.basePath = path;
+            basePath = path;
 
             fileSizeStepBreakPoint = randomAccessPreference * 1048576;
             ioQueueDepth = (int)Math.Ceiling(pipeAmplificationFactor * pipeFatness / perFileBufferSizeBytes);
