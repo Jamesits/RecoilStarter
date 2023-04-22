@@ -63,9 +63,9 @@ namespace RecoilStarter
 
             // print performance statistics
             Console.Error.WriteLine(string.Format("[i] Directory: {0}", gameDir));
-            Console.Error.WriteLine(string.Format("[i] Total files: {0}, Total size: {1:0.00}MiB", hasher.FileCount, (double)hasher.FileSize / 1048576));
-            Console.Error.WriteLine(string.Format("[i] Time: {0:0.00}s", (double)watch.ElapsedMilliseconds / 1000));
-            Console.Error.WriteLine(string.Format("[i] Speed: {0:0.00}files/s, {1:0.00}MiB/s", (double)hasher.FileCount / watch.ElapsedMilliseconds * 1000, (double)hasher.FileSize / watch.ElapsedMilliseconds * 1000 / 1048576));
+            Console.Error.WriteLine(string.Format("[i] Total files: {0}, Total size: {1:0.00} MiB", hasher.FileCount, (double)hasher.FileSize / 1048576));
+            Console.Error.WriteLine(string.Format("[i] Time: {0:0.00} s", (double)watch.ElapsedMilliseconds / 1000));
+            Console.Error.WriteLine(string.Format("[i] Speed: {0:0.00} files/s, {1:0.00} MiB/s", (double)hasher.FileCount / watch.ElapsedMilliseconds * 1000, (double)hasher.FileSize / watch.ElapsedMilliseconds * 1000 / 1048576));
 
             hasher.Dispose();
 
