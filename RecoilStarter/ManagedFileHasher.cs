@@ -8,38 +8,45 @@ namespace RecoilStarter
 {
     public class ManagedFileHasher : IDisposable
     {
-        // weight factors
-        private readonly double fileSizeStepBreakPoint = 20 * 1024 * 1024;
-
-        // buffer size
-        // https://github.com/dotnet/runtime/discussions/74405#discussioncomment-3488674
-        private readonly int perFileBufferSizeBytes = 131072;
-        private readonly int ioQueueDepth = 2;
-
         private readonly string path;
 
+        // synchronization
         private readonly Semaphore ioSem;
         private int wg = 0;
 
-        public ManagedFileHasher(string path, string strategy)
+        // weight factors
+        private readonly double fileSizeStepBreakPoint;
+
+        // buffer size calculation
+        // https://github.com/dotnet/runtime/discussions/74405#discussioncomment-3488674
+        // pipeAmplificationFactor is 1 plus your runtime's IO overhead.
+        // The value depends on your runtime; on .Net Framework 3.5 (Windows 11 22H1), it should be set to around 1.3.
+        private const double pipeAmplificationFactor = 1.3;
+        // Per-file buffer size. Too small and you get bad performance on the I/O side; too big and you get bad performance
+        // on the runtime side when reading large files. Values between 81920 and 131072 is optimal for a lot files around
+        // a few MiBs and occasional large files.
+        private readonly int perFileBufferSizeBytes = 81920; 
+        private readonly int ioQueueDepth; // calculated
+
+        // pipeFatness: disk sequential throughput * RTT
+        // randomAccessPreference: (TODO)
+        public ManagedFileHasher(string path, double pipeFatness, double randomAccessPreference)
         {
             this.path = path;
 
-            switch (strategy)
-            {
-                case "HDD_SATA":
-                    ioQueueDepth = 2;
-                    break;
-
-                case "SSD_NVME":
-                    ioQueueDepth = 128;
-                    break;
-
-                default:
-                    break;
-            }
-
+            fileSizeStepBreakPoint = randomAccessPreference * 1048576;
+            ioQueueDepth = (int)Math.Ceiling(pipeAmplificationFactor * pipeFatness / perFileBufferSizeBytes);
             ioSem = new Semaphore(ioQueueDepth, ioQueueDepth);
+        }
+
+        // calculate random access penality on large files
+        private int GetWeight(string path)
+        {
+            var fi = new FileInfo(path);
+            int weight = (int)(Math.Ceiling(fi.Length / fileSizeStepBreakPoint));
+            if (weight > ioQueueDepth) weight = ioQueueDepth;
+            if (weight < 1) weight = 1;
+            return weight;
         }
 
         public void Dispose()
@@ -74,15 +81,6 @@ namespace RecoilStarter
                 Thread.Sleep(0); // Thread.Yield is not available yet
             }
             Console.WriteLine("[i] Hash finished.");
-        }
-
-        private int GetWeight(string path)
-        {
-            var fi = new FileInfo(path);
-            int weight = (int)(Math.Ceiling(fi.Length / fileSizeStepBreakPoint));
-            if (weight > ioQueueDepth) weight = ioQueueDepth;
-            if (weight < 1) weight = 1;
-            return weight;
         }
 
         private static IEnumerable<string> EnumerateFiles(string path)
@@ -137,7 +135,7 @@ namespace RecoilStarter
             ioSem.Release(req.Value.weight);
             req.Value.stream.Dispose();
             Console.WriteLine(string.Format("{0} {1} {2}", req.Value.weight, req.Value.path, MD5Hasher.Hash.AsHexString()));
-            // no need to dispose the hasher on .Net Framework 3.5?
+            MD5Hasher.Clear(); // dispose the hash result
 
             Interlocked.Decrement(ref wg);
         }

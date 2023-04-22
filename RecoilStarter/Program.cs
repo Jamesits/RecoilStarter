@@ -13,7 +13,9 @@ namespace RecoilStarter
             Console.WriteLine("CLR Version: {0}", Environment.Version.ToString());
 
             string game_dir = "D:\\Program Files\\Genshin Impact\\Genshin Impact Game";
-            ManagedFileHasher hasher = new ManagedFileHasher(game_dir, "SSD_NVME");
+            //string game_dir = "C:\\temp_storage_test\\Genshin Impact Game";
+
+            ManagedFileHasher hasher = new ManagedFileHasher(game_dir, 1835008, 256);
             Console.WriteLine("[*] Starting hash threads...");
             var watch = Stopwatch.StartNew();
             hasher.Run();
