@@ -85,7 +85,7 @@ namespace RecoilStarter
             Console.Error.WriteLine("[*] All requests have been fired, collecting results...");
             while (waitGroup != 0)
             {
-                //Console.WriteLine(string.Format("[i] Waiting for I/O to finish, in flight requests: {0}", waitGroup));
+                //Console.Error.WriteLine(string.Format("[i] Waiting for I/O to finish, in flight requests: {0}", waitGroup));
                 Thread.Sleep(0); // Thread.Yield is not available yet
             }
             Console.Error.WriteLine("[+] Hash finished.");
@@ -135,7 +135,7 @@ namespace RecoilStarter
             var req = stateInfo as HashRequest?;
             if (req == null) return;
 
-            //Console.WriteLine(string.Format("[i] Start {0}", req.Value.path));
+            //Console.Error.WriteLine(string.Format("[i] Start {0}, weight {1}", req.Value.path, req.Value.weight));
 
             var MD5Hasher = MD5.Create();
             MD5Hasher.ComputeHash(req.Value.stream);
