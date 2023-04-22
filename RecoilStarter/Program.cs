@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace RecoilStarter
 {
@@ -17,18 +13,12 @@ namespace RecoilStarter
             Console.WriteLine("CLR Version: {0}", Environment.Version.ToString());
 
             string game_dir = "D:\\Program Files\\Genshin Impact\\Genshin Impact Game";
-            ManagedFileHasher hasher = new ManagedFileHasher(game_dir);
-            Console.CancelKeyPress += delegate
-            {
-                Console.WriteLine("[!] Ctrl+C pressed, exiting...");
-                hasher.Cancel();
-            };
+            ManagedFileHasher hasher = new ManagedFileHasher(game_dir, "SSD_NVME");
             Console.WriteLine("[*] Starting hash threads...");
             var watch = Stopwatch.StartNew();
-            Task hasher_task = hasher.Start();
-            hasher_task.Wait();
+            hasher.Run();
             watch.Stop();
-            Console.WriteLine("[+] Hash threads done.");
+            Console.WriteLine("[+] Hasher returned.");
             Console.WriteLine(String.Format("[i] Time: {0}ms", watch.ElapsedMilliseconds));
 
             if (Debugger.IsAttached)
