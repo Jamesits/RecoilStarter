@@ -11,8 +11,8 @@ namespace RecoilStarter
         private readonly string basePath;
 
         // synchronization
-        private readonly Semaphore ioSem;
-        private int wg = 0;
+        private readonly Semaphore ioSemaphore;
+        private int waitGroup = 0;
 
         // stat
         public long FileCount = 0;
@@ -40,7 +40,7 @@ namespace RecoilStarter
 
             fileSizeStepBreakPoint = randomAccessPreference * 1048576;
             ioQueueDepth = (int)Math.Ceiling(pipeAmplificationFactor * pipeFatness / perFileBufferSizeBytes);
-            ioSem = new Semaphore(ioQueueDepth, ioQueueDepth);
+            ioSemaphore = new Semaphore(ioQueueDepth, ioQueueDepth);
         }
 
         // calculate random access penality on large files
@@ -54,7 +54,7 @@ namespace RecoilStarter
 
         public void Dispose()
         {
-            ioSem.Close();
+            ioSemaphore.Close();
         }
 
         private struct HashRequest
@@ -72,8 +72,8 @@ namespace RecoilStarter
                 FileSize += fi.Length;
 
                 var weight = GetWeight(fi.Length);
-                for (var i = 0; i < weight; i++) ioSem.WaitOne();
-                Interlocked.Increment(ref wg);
+                for (var i = 0; i < weight; i++) ioSemaphore.WaitOne();
+                Interlocked.Increment(ref waitGroup);
                 ThreadPool.QueueUserWorkItem(HashProc, new HashRequest{ 
                     path = path,
                     weight = weight,
@@ -83,9 +83,9 @@ namespace RecoilStarter
             }
 
             Console.Error.WriteLine("[*] All requests have been fired, collecting results...");
-            while (wg != 0)
+            while (waitGroup != 0)
             {
-                //Console.WriteLine(string.Format("[i] Waiting for I/O to finish, in flight requests: {0}", wg));
+                //Console.WriteLine(string.Format("[i] Waiting for I/O to finish, in flight requests: {0}", waitGroup));
                 Thread.Sleep(0); // Thread.Yield is not available yet
             }
             Console.Error.WriteLine("[+] Hash finished.");
@@ -140,12 +140,12 @@ namespace RecoilStarter
             var MD5Hasher = MD5.Create();
             MD5Hasher.ComputeHash(req.Value.stream);
 
-            ioSem.Release(req.Value.weight);
+            ioSemaphore.Release(req.Value.weight);
             req.Value.stream.Dispose();
             Console.WriteLine(string.Format("{0} {1}", req.Value.path, MD5Hasher.Hash.AsHexString()));
             MD5Hasher.Clear(); // dispose the hash result
 
-            Interlocked.Decrement(ref wg);
+            Interlocked.Decrement(ref waitGroup);
         }
     }
 }
