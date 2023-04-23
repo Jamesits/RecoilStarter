@@ -11,20 +11,24 @@ namespace RecoilStarter
             var backgroundProcessing = false; // set to lower the IO priority automatically
 
             // NVMe (PCIe 4.0 x4) SSD
-            var gameDir = "C:\\temp_storage_test\\Genshin Impact Game";
-            var pipeFatness = 3670016; // 7000MiB/s * 500μs
-            var randomAccessPreference = 256;
-
-            // NVMe (PCIe 3.0 x4) SSD
-            //var gameDir = "D:\\Program Files\\Genshin Impact\\Genshin Impact Game";
-            //var pipeFatness = 1835008; // 3500MiB/s * 500μs
+            //var gameDir = "F:\\Genshin Impact Game";
+            //var pipeFatness = 3670016; // 7000MiB/s * 500μs
             //var randomAccessPreference = 256;
 
+            // NVMe (PCIe 3.0 x4) SSD
+            var gameDir = "F:\\Genshin Impact Game";
+            var pipeFatness = 1835008; // 3500MiB/s * 500μs
+            var randomAccessPreference = 256;
+
             // SATA SSD
-            // (TBD)
+            //var gameDir = "D:\\software\\Genshin Impact\\Genshin Impact Game";
+            //var pipeFatness = 1724907; // 470MiB/s * 3.5ms
+            //var randomAccessPreference = 256;
 
             // SATA HDD
-            // (TBD)
+            //var gameDir = "E:\\BuildDownloadDemo\\BuildDownloadDemo_Data\\Persistent\\Genshin Impact Game";
+            //var pipeFatness = 167772; // 200MiB/s * 0.8ms
+            //var randomAccessPreference = 0.5;
 
             // NAS with ZFS RAIDZ2 HDD, over 10Gbps local network
             //var gameDir = "\\\\li-nas01\\public\\dropbox\\temp_storage_test\\Genshin Impact Game";
